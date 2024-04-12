@@ -118,3 +118,44 @@ sudo firewall-cmd --reload
 
 # Check the list of added rules
 sudo firewall-cmd --list-all
+
+# 9. Configure ip tables
+
+# Set iptables to see bridged traffic
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+
+# Apply the configuration
+sudo sysctl --system
+
+# 10. Initialize the Kubernetes cluster
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+# 10.b possible error and resolution
+  # if this error appears: 
+  [multiclouds_tech@k8s-cluster-1 ~]$ sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+  [init] Using Kubernetes version: v1.29.3
+  [preflight] Running pre-flight checks
+          [WARNING Firewalld]: firewalld is active, please ensure ports [6443 10250] are open or your cluster may not function correctly
+  error execution phase preflight: [preflight] Some fatal errors occurred:
+          [ERROR CRI]: container runtime is not running: output: time="2024-04-12T19:03:00Z" level=fatal msg="validate service connection: validate CRI v1 runtime API for endpoint \"unix:///var/run/containerd/containerd.sock\": rpc error: code = Unimplemented desc = unknown service runtime.v1.RuntimeService"
+  , error: exit status 1
+  [preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`
+  To see the stack trace of this error execute with --v=5 or higher
+  
+  # you'll need to: 
+  sudo rm /etc/containerd/config.toml
+  sudo systemctl restart containerd
+  
+
+# 11. Set up the local kubeconfig
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# 12. Deploy Flannel as the network overlay
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+
