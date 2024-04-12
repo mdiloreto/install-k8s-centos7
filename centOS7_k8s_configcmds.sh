@@ -1,10 +1,10 @@
 # 1. Disable Swap (required for Kubernetes)
 sudo swapoff -a
 
-# 1.b Configure Hostnames: <<<< Review hostnames and modify as needed >>>>
+# 1.b Configure Hostnames: <<<< Review hostnames and modify as needed >>>> <<<< not necessary in Cloud environment >>> 
 
-sudo hostnamectl set-hostname master-node
-sudo hostnamectl set-hostname worker-node1
+# sudo hostnamectl set-hostname master-node
+# sudo hostnamectl set-hostname worker-node1
 
 
 # 2. Set SELinux in permissive mode (disables enforcement but logs potential denials)
@@ -24,11 +24,14 @@ sudo yum remove docker \
 
 sudo yum install -y yum-utils
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
+sudo yum update
 sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin  
 
 sudo systemctl start docker
 sudo systemctl enable docker
+
+sudo systemctl start containerd
+sudo systemctl enable containerd
 
 # 4. Add de kubernetes Repo <<Take into account the url for the k8s distro/version>>
 
